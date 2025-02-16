@@ -1,0 +1,221 @@
+{% extends "news/base.html" %}
+{% load widget_tweaks %}
+{% block title %}Profile - News Site{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <!-- Profile Card -->
+        <div class="card mb-4 profile-card">
+            <div class="card-body text-center">
+                {% if user.userprofile.profile_picture %}
+                    <img src="{{ user.userprofile.profile_picture.url }}" alt="Profile Picture" class="profile-picture mb-3">
+                {% else %}
+                    <div class="profile-picture-placeholder mb-3">
+                        <i class="bi bi-person-circle display-1"></i>
+                    </div>
+                {% endif %}
+                <h2 class="card-title h3 mb-3">{{ user.username }}</h2>
+                <div class="profile-stats mb-4">
+                    <div class="row g-0 text-center">
+                        <div class="col">
+                            <div class="p-3">
+                                <h3 class="h2 mb-1">{{ post_count }}</h3>
+                                <span class="text-muted small text-uppercase">Posts</span>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="p-3">
+                                <h3 class="h2 mb-1">{{ comment_count }}</h3>
+                                <span class="text-muted small text-uppercase">Comments</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-envelope me-2"></i>{{ user.email }}
+                    </p>
+                    <p class="text-muted mb-1">
+                        <i class="bi bi-calendar3 me-2"></i>Joined {{ user.date_joined|date:"F Y" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Profile Form -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent d-flex align-items-center">
+                <i class="bi bi-pencil-square me-2 text-primary"></i>
+                <h3 class="card-title h5 mb-0">Edit Profile</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <div class="section-header d-flex align-items-center mb-3">
+                            <i class="bi bi-person-badge me-2 text-primary"></i>
+                            <h6 class="text-uppercase mb-0">User Information</h6>
+                        </div>
+                        {% for field in user_form %}
+                            <div class="form-group mb-3">
+                                <label class="form-label text-muted small">{{ field.label }}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        {% if field.name == 'username' %}
+                                            <i class="bi bi-person"></i>
+                                        {% elif field.name == 'email' %}
+                                            <i class="bi bi-envelope"></i>
+                                        {% endif %}
+                                    </span>
+                                    {{ field|add_class:"form-control" }}
+                                </div>
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <div class="form-text small text-muted">
+                                        <i class="bi bi-info-circle me-1"></i>{{ field.help_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="section-header d-flex align-items-center mb-3">
+                            <i class="bi bi-person-vcard me-2 text-primary"></i>
+                            <h6 class="text-uppercase mb-0">Profile Details</h6>
+                        </div>
+                        {% for field in profile_form %}
+                            <div class="form-group mb-3">
+                                <label class="form-label text-muted small">{{ field.label }}</label>
+                                {% if field.field.widget.input_type == 'file' %}
+                                    <div class="profile-image-upload">
+                                        {% if user.userprofile.profile_picture %}
+                                            <div class="current-image mb-2">
+                                                <img src="{{ user.userprofile.profile_picture.url }}" alt="Current Profile Picture" class="rounded" style="max-height: 100px;">
+                                            </div>
+                                        {% endif %}
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">
+                                                <i class="bi bi-image"></i>
+                                            </span>
+                                            {{ field|add_class:"form-control" }}
+                                        </div>
+                                        {% if user.userprofile.profile_picture %}
+                                            <div class="form-text small text-muted">
+                                                <i class="bi bi-info-circle me-1"></i>Current: {{ user.userprofile.profile_picture.name }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="bi bi-card-text"></i>
+                                        </span>
+                                        {{ field|add_class:"form-control" }}
+                                    </div>
+                                {% endif %}
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            <i class="bi bi-exclamation-circle me-1"></i>{{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Save Changes
+                        </button>
+                        <button type="reset" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>Reset Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- Posts Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h3 class="card-title h5 mb-0">My Posts</h3>
+                <a href="{% url 'news_create' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-lg me-2"></i>Create New Post
+                </a>
+            </div>
+            <div class="card-body">
+                {% if user_posts %}
+                    {% for post in user_posts %}
+                        <div class="card mb-3 post-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h4 class="card-title h5 mb-0">
+                                        <a href="{% url 'news_detail' post.pk %}" class="text-decoration-none text-dark">
+                                            {{ post.title }}
+                                        </a>
+                                    </h4>
+                                    <span class="badge bg-primary rounded-pill">
+                                        {{ post.comments.count }} comments
+                                    </span>
+                                </div>
+                                
+                                <p class="card-text text-muted small mb-2">
+                                    <i class="bi bi-clock me-1"></i>Posted on {{ post.created_at|date:"F d, Y" }}
+                                    {% if post.updated_at != post.created_at %}
+                                        <span class="ms-2">
+                                            <i class="bi bi-pencil me-1"></i>Updated {{ post.updated_at|date:"F d, Y" }}
+                                        </span>
+                                    {% endif %}
+                                </p>
+
+                                {% if post.image %}
+                                    <img src="{{ post.image.url }}" alt="{{ post.title }}" class="img-fluid rounded mb-3" style="max-height: 200px; object-fit: cover;">
+                                {% endif %}
+
+                                <p class="card-text">{{ post.content|truncatewords:30 }}</p>
+                                
+                                <div class="btn-toolbar">
+                                    <div class="btn-group me-2">
+                                        <a href="{% url 'news_detail' post.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye me-1"></i>View
+                                        </a>
+                                        <a href="{% url 'news_update' post.pk %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-pencil me-1"></i>Edit
+                                        </a>
+                                    </div>
+                                    <form method="post" action="{% url 'news_delete' post.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this post?')">
+                                            <i class="bi bi-trash me-1"></i>Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-journal-text display-1 text-muted mb-3"></i>
+                        <p class="text-muted mb-3">You haven't created any posts yet.</p>
+                        <a href="{% url 'news_create' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-2"></i>Create Your First Post
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

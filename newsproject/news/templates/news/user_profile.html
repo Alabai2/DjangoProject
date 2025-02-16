@@ -1,0 +1,72 @@
+{% extends "news/base.html" %}
+{% block title %}{{ profile_user.username }}'s Profile - News Site{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">{{ profile_user.username }}'s Profile</h2>
+                {% if profile_user.userprofile.profile_picture %}
+                    <img src="{{ profile_user.userprofile.profile_picture.url }}" alt="Profile Picture" class="img-fluid rounded-circle mb-3">
+                {% endif %}
+                
+                <div class="profile-stats mb-4">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h3 class="h5">{{ post_count }}</h3>
+                            <span class="text-muted">Posts</span>
+                        </div>
+                        <div class="col-6">
+                            <h3 class="h5">{{ comment_count }}</h3>
+                            <span class="text-muted">Comments</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% if profile_user.userprofile.bio %}
+                    <div class="mb-3">
+                        <h5>About</h5>
+                        <p class="card-text">{{ profile_user.userprofile.bio }}</p>
+                    </div>
+                {% endif %}
+
+                <p class="text-muted">
+                    Member since {{ profile_user.date_joined|date:"F d, Y" }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="card-title">{{ profile_user.username }}'s Posts</h2>
+                {% if user_posts %}
+                    {% for post in user_posts %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h3 class="card-title h5">
+                                    <a href="{% url 'news_detail' post.pk %}" class="text-decoration-none text-dark">
+                                        {{ post.title }}
+                                    </a>
+                                </h3>
+                                <p class="card-text text-muted small">
+                                    Posted on {{ post.created_at|date:"F d, Y" }}
+                                    {% if post.updated_at != post.created_at %}
+                                        (Updated: {{ post.updated_at|date:"F d, Y" }})
+                                    {% endif %}
+                                </p>
+                                <p class="card-text">{{ post.content|truncatewords:30 }}</p>
+                                <a href="{% url 'news_detail' post.pk %}" class="btn btn-sm btn-outline-primary">Read More</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No posts yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

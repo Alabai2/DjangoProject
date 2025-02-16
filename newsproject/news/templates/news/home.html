@@ -1,0 +1,260 @@
+{% extends "news/base.html" %}
+{% block title %}Home - News Site{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section mb-5 p-4 rounded">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="display-4 text-white mb-3">Welcome to News Site</h1>
+            <p class="lead text-white-50 mb-4">Discover and share the latest news, stories, and insights with our community.</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'news_create' %}" class="btn btn-light btn-lg">
+                    <i class="bi bi-plus-circle me-2"></i>Create New Post
+                </a>
+            {% else %}
+                <a href="{% url 'register' %}" class="btn btn-light btn-lg me-3">
+                    <i class="bi bi-person-plus me-2"></i>Join Now
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- News Feed Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-newspaper text-primary me-2 fs-4"></i>
+                <h2 class="mb-0">Latest News</h2>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="text-muted me-2">Sort By:</span>
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        {% if current_sort == '-created_at' %}Newest First
+                        {% elif current_sort == 'created_at' %}Oldest First
+                        {% elif current_sort == 'title' %}Title (A-Z)
+                        {% elif current_sort == '-title' %}Title (Z-A)
+                        {% elif current_sort == 'author__username' %}Author (A-Z)
+                        {% elif current_sort == '-author__username' %}Author (Z-A)
+                        {% else %}Newest First{% endif %}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+                        <li><a class="dropdown-item {% if current_sort == '-created_at' %}active{% endif %}" href="?sort=-created_at">
+                            <i class="bi bi-calendar-check me-2"></i>Newest First
+                        </a></li>
+                        <li><a class="dropdown-item {% if current_sort == 'created_at' %}active{% endif %}" href="?sort=created_at">
+                            <i class="bi bi-calendar me-2"></i>Oldest First
+                        </a></li>
+                        <li><a class="dropdown-item {% if current_sort == 'title' %}active{% endif %}" href="?sort=title">
+                            <i class="bi bi-sort-alpha-down me-2"></i>Title (A-Z)
+                        </a></li>
+                        <li><a class="dropdown-item {% if current_sort == '-title' %}active{% endif %}" href="?sort=-title">
+                            <i class="bi bi-sort-alpha-up-alt me-2"></i>Title (Z-A)
+                        </a></li>
+                        <li><a class="dropdown-item {% if current_sort == 'author__username' %}active{% endif %}" href="?sort=author__username">
+                            <i class="bi bi-person me-2"></i>Author (A-Z)
+                        </a></li>
+                        <li><a class="dropdown-item {% if current_sort == '-author__username' %}active{% endif %}" href="?sort=-author__username">
+                            <i class="bi bi-person-up me-2"></i>Author (Z-A)
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {% if posts %}
+            {% for post in posts %}
+                <div class="card mb-4 news-post">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-shrink-0">
+                                {% if post.author.userprofile.profile_picture %}
+                                    <img src="{{ post.author.userprofile.profile_picture.url }}" alt="{{ post.author.username }}" class="rounded-circle me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                        <i class="bi bi-person text-secondary"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h3 class="card-title h4 mb-1">
+                                    <a href="{% url 'news_detail' post.pk %}" class="text-decoration-none stretched-link">
+                                        {{ post.title }}
+                                    </a>
+                                </h3>
+                                <p class="card-text text-muted small mb-0">
+                                    Posted by <a href="{% url 'user_profile' post.author.username %}" class="text-decoration-none fw-bold">{{ post.author.username }}</a>
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-clock me-1"></i>{{ post.created_at|date:"F d, Y" }}
+                                </p>
+                            </div>
+                        </div>
+
+                        {% if post.image %}
+                            <img src="{{ post.image.url }}" class="card-img mb-3 rounded" alt="{{ post.title }}">
+                        {% endif %}
+
+                        <p class="card-text">{{ post.content|truncatewords:50 }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <a href="{% url 'news_detail' post.pk %}" class="btn btn-primary">
+                                <i class="bi bi-book me-2"></i>Read More
+                            </a>
+                            <div class="d-flex align-items-center text-muted">
+                                <i class="bi bi-chat-left-text me-2"></i>
+                                <span>{{ post.comments.count }} comments</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% if is_paginated %}
+                <nav aria-label="Page navigation" class="my-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="First">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Previous">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if current_sort %}&sort={{ current_sort }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Next">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_sort %}&sort={{ current_sort }}{% endif %}" aria-label="Last">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-newspaper display-1 text-muted mb-3"></i>
+                <h3>No News Posts Yet</h3>
+                <p class="text-muted mb-4">Be the first to share a story with our community!</p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'news_create' %}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-circle me-2"></i>Create New Post
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Login to Post
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <!-- Featured Authors Card -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-people-fill me-2"></i>Top Contributors
+                </h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for author in popular_authors %}
+                    <a href="{% url 'user_profile' author.username %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                {% if author.userprofile.profile_picture %}
+                                    <img src="{{ author.userprofile.profile_picture.url }}" alt="{{ author.username }}" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person text-secondary"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ author.username }}</h6>
+                                <small class="text-muted">{{ author.post_count }} posts</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">
+                                <i class="bi bi-star-fill"></i>
+                            </span>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Stats Card -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-4">
+                    <i class="bi bi-graph-up me-2"></i>Community Stats
+                </h5>
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="p-3 bg-light rounded">
+                            <i class="bi bi-file-text text-primary mb-2 fs-4"></i>
+                            <h3 class="h5 mb-0">{{ posts.count }}</h3>
+                            <small class="text-muted">Total Posts</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-3 bg-light rounded">
+                            <i class="bi bi-people text-primary mb-2 fs-4"></i>
+                            <h3 class="h5 mb-0">{{ popular_authors|length }}</h3>
+                            <small class="text-muted">Active Authors</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call to Action Card -->
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-pencil-square text-primary display-4 mb-3"></i>
+                <h5 class="card-title">Share Your Story</h5>
+                <p class="card-text">Join our community and start sharing your news and insights today.</p>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'news_create' %}" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle me-2"></i>Create New Post
+                    </a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-person-plus me-2"></i>Join Now
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
